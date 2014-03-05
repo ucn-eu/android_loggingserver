@@ -7,6 +7,7 @@
     "express": "3.x",
     "multiparty": "*",
     "minimist": "*",
-    "mongodb": "*"
+    "mongodb": "*",
+    "underscore": "*"
   }
 }
