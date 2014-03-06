@@ -55,7 +55,8 @@ app.post('/*',function(req,res) {
     console.log("upload from " + req.ip);
     var c = 0;
     var docs = {};
-    var form = new multiparty.Form(maxFields=10000);
+    var form = new multiparty.Form({maxFields : 10000});
+
     form.on('part', function(part) {
 	// handle new part (json object)
 	var json = '';
@@ -84,8 +85,7 @@ app.post('/*',function(req,res) {
     form.on('error', function(err) {
 	console.error(err);
 	console.error(err.stack);
-	res.status(500);
-	res.render('error', { error: err });
+	res.send(500, { error: err });
     });
 
     form.on('close', function(err) {
@@ -103,8 +103,7 @@ app.post('/*',function(req,res) {
 	}); // each
 
 	if (error) {
-	    res.status(500);
-	    res.render('error', { error: err });
+	    res.send(500, { error: error });
 	} else {
 	    res.send(200);
 	}
@@ -118,8 +117,7 @@ app.post('/*',function(req,res) {
 app.use(function(err, req, res, next){
     console.error(err);
     console.error(err.stack);
-    res.status(500);
-    res.render('error', { error: err });
+    res.send(500, { error: err });
 });
 
 console.log("Listening on *:"+port);
