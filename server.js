@@ -1,11 +1,12 @@
+var debug = require('debug')('uploader')
 var _ = require('underscore');
 var argv = require('minimist')(process.argv.slice(2));
 var express = require('express');
 var multiparty = require('multiparty');
+
 // mongo stuff
 var Db = require('mongodb').Db;
 var Server = require('mongodb').Server;
-
 
 if (argv.h || argv._.length!=1) {
   console.log("Usage: " + process.argv[0] + 
@@ -21,7 +22,7 @@ var dbname = argv._[0];
 var dburl = 'mongodb://'+server+':'+serverport+'/'+dbname;
 
 // connect to the db
-console.log("mongodb: " + dburl);
+debug("mongodb: " + dburl);
 var db = new Db(dbname, 
 		new Server(server, serverport, {auto_reconnect: true}), 
 		{safe: true});
@@ -52,7 +53,7 @@ app.get('/*', function(req, res){
 });
 
 app.post('/*',function(req,res) {
-    console.log("upload from " + req.ip);
+    debug("upload from " + req.ip);
     var c = 0;
     var docs = {};
     var form = new multiparty.Form({maxFields : 10000});
@@ -77,25 +78,25 @@ app.post('/*',function(req,res) {
 		docs[obj.collection].push(obj);
 		c += 1;
 	    } else {
-		console.log("invalid data: " + json);
+		debug("invalid data: " + json);
 	    }
 	});
     });
 
     form.on('error', function(err) {
-	console.error(err);
-	console.error(err.stack);
+	debug(err);
+	debug(err.stack);
 	res.send(500, { error: err });
     });
 
     form.on('close', function(err) {
-	console.log("received " + c + " items");
+	debug("received " + c + " items");
 
 	var error = undefined;
 	_.each(docs, function(value, key) {
 	    if (error) return;	
 	    // insert batch to the collection
-	    console.log("upload " + value.length + " items to " + key);
+	    debug("upload " + value.length + " items to " + key);
 	    var collection = db.collection(key);
 	    collection.insert(value, {w:1}, function(err, result) {
 		if (err)  error = err;
@@ -115,10 +116,10 @@ app.post('/*',function(req,res) {
 
 // generic error handler
 app.use(function(err, req, res, next){
-    console.error(err);
-    console.error(err.stack);
+    debug(err);
+    debug(err.stack);
     res.send(500, { error: err });
 });
 
-console.log("Listening on *:"+port);
+debug("Listening on *:"+port);
 app.listen(port);
