@@ -104,6 +104,7 @@ app.post('/*',function(req,res) {
 	}); // each
 
 	if (error) {
+	    debug("failed to add data to mongodb: " + error);
 	    res.send(500, { error: error });
 	} else {
 	    res.send(200);
