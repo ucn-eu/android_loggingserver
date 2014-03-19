@@ -26,7 +26,6 @@ debug("mongodb: " + dburl);
 var db = new Db(dbname, 
 		new Server(server, serverport, {auto_reconnect: true}), 
 		{safe: true});
-
 db.open(function(err, db) {
     if (err) {
 	console.error(err);
@@ -40,23 +39,29 @@ var app = express();
 // we'll be behind a proxy
 app.enable('trust proxy');
 
+// middleware
 app.use(express.json());
 app.use(express.urlencoded());
-
-app.get('/*', function(req, res){
-  var body = 'MongoDB data uploader uptime: ' + process.uptime() + "s\n" +
-	"Database: " + dburl + "\n" +
-	"Contact: Anna-Kaisa Pietilainen <anna-kaisa.pietilainen@inria.fr>";
-  res.setHeader('Content-Type', 'text/plain');
-  res.setHeader('Content-Length', Buffer.byteLength(body));
-  res.end(body);
+app.use(function(err, req, res, next){
+    debug(err);
+    debug(err.stack);
+    res.type('application/json');
+    res.send(500, { error: "internal server error",
+		    details: err});
 });
 
+// routes
+app.get('/*', function(req, res){
+    res.type('application/json');
+    res.send(500, { error: "invalid request",
+		    url : req.originalUrl});
+});
 app.post('/*',function(req,res) {
-    debug("upload from " + req.ip);
     var c = 0;
     var docs = {};
     var form = new multiparty.Form({maxFields : 10000});
+
+    debug("upload from " + req.ip);
 
     form.on('part', function(part) {
 	// handle new part (json object)
@@ -86,7 +91,9 @@ app.post('/*',function(req,res) {
     form.on('error', function(err) {
 	debug(err);
 	debug(err.stack);
-	res.send(500, { error: err });
+	res.type('application/json');	    
+	res.send(500, { error: "internal server error",
+			details: err});
     });
 
     form.on('close', function(err) {
@@ -105,7 +112,9 @@ app.post('/*',function(req,res) {
 
 	if (error) {
 	    debug("failed to add data to mongodb: " + error);
-	    res.send(500, { error: error });
+	    res.type('application/json');	    
+	    res.send(500, { error: "internal server error",
+			    details: error});
 	} else {
 	    res.send(200);
 	}
@@ -115,12 +124,8 @@ app.post('/*',function(req,res) {
     form.parse(req);
 });
 
-// generic error handler
-app.use(function(err, req, res, next){
-    debug(err);
-    debug(err.stack);
-    res.send(500, { error: err });
+// start!
+var server = app.listen(port, function() {
+    debug("listening on %s:%d",
+	  server.address().address, server.address().port);
 });
-
-debug("Listening on *:"+port);
-app.listen(port);
