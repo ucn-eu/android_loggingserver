@@ -1,8 +1,7 @@
 Data Uploader
 =============
 
-Simple node.js based server to receive multipart from POST uploads 
-of json objects to be stored to a mongodb.
+Node app to receive multipart from POST uploads of json objects to be stored to a mongodb.
 
 http(s)://<server>/upload/<database>
 
@@ -12,6 +11,18 @@ if the keyword is missing.
 RUNNING
 -------
 
-npm install -g forever
+Install pm2:
 
-forever start -o /var/log/uploader.log server.js
+$ npm install -g pm2
+
+$ NODE_ENV=production npm start
+$ NODE_ENV=production npm stop
+
+STATUS
+------
+
+$ pm2 list
+$ pm2 logs uploader
+$ pm2 desc uploader
+
+

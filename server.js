@@ -8,21 +8,21 @@ var multiparty = require('multiparty');
 var Db = require('mongodb').Db;
 var Server = require('mongodb').Server;
 
-if (argv.h || argv._.length!=1) {
+if (argv.h || !argv.d) {
   console.log("Usage: " + process.argv[0] + 
 	" " + process.argv[1] + 
 	" [-p <port>] [-s server] [-q server_port] db");
   process.exit(0);
 }
 
-var port = argv.p || 8080;
+var port = argv.p || 3001;
 var server = argv.s || 'localhost';
 var serverport = argv.q || 27017;
-var dbname = argv._[0];
+var dbname = argv.d;
 var dburl = 'mongodb://'+server+':'+serverport+'/'+dbname;
+debug("mongodb: " + dburl);
 
 // connect to the db
-debug("mongodb: " + dburl);
 var db = new Db(dbname, 
 		new Server(server, serverport, {auto_reconnect: true}), 
 		{safe: true});

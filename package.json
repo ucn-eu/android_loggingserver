@@ -1,14 +1,18 @@
 {
-  "name": "data-uploaded",
+  "name": "data-uploader",
   "description": "Simple mongodb data uploader web service to receive POST data to the db.",
   "version": "0.0.1",
   "private": true,
+  "scripts": {
+    "start": "DEBUG=uploader:* pm2 start server.js --name uploader -i 5 -- -p 3001 -s ucn -d ucntest",
+    "stop": "DEBUG=uploader:* pm2 stop uploader; pm2 delete uploader;"
+  },
   "dependencies": {
-    "debug": "*", 
+    "debug": "latest", 
     "express": "3.x",
-    "multiparty": "*",
-    "minimist": "*",
-    "mongodb": "*",
-    "underscore": "*"
+    "multiparty": "latest",
+    "minimist": "latest",
+    "mongodb": "latest",
+    "underscore": "latest"
   }
 }
