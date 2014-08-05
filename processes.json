@@ -16,14 +16,14 @@
         "DEBUG"    : "uploader:*"
     }
   },{    
-    "name"         : "upload-fathom",   
+    "name"         : "upload-browser",   
     "script"       : "server.js",
-    "args"         : "['-p 3003 -s ucn -d fathomtest']",
+    "args"         : "['-p 3003 -s ucn -d browsertest']",
     "instances"    : "4",
     "exec_mode"    : "cluster_mode",
-    "error_file"   : "/home/nodeapp/logs/upload-fathom-error.log",   
-    "out_file"     : "/home/nodeapp/logs/upload-fathom.log",   
-    "pid_file"     : "/home/nodeapp/pids/upload-fathom",   
+    "error_file"   : "/home/nodeapp/logs/upload-browser-error.log",   
+    "out_file"     : "/home/nodeapp/logs/upload-browser.log",   
+    "pid_file"     : "/home/nodeapp/pids/upload-browser",   
     "run_as_user"  : "nodeapp",
     "run_as_group" : "nodeapp",
     "cwd"          : "/home/nodeapp/apps/upload.git",
