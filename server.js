@@ -11,7 +11,7 @@ var Server = require('mongodb').Server;
 if (argv.h || !argv.d) {
   console.log("Usage: " + process.argv[0] + 
 	" " + process.argv[1] + 
-	" [-p <port>] [-s server] [-q server_port] db");
+	" [-p <port>] [-s server] [-q server_port] -d db");
   process.exit(0);
 }
 
@@ -19,6 +19,11 @@ var port = argv.p || 3001;
 var server = argv.s || 'localhost';
 var serverport = argv.q || 27017;
 var dbname = argv.d;
+if (!dbname) {
+    console.error("missing -d <mongodb name>");
+    process.exit(-1);
+}
+
 var dburl = 'mongodb://'+server+':'+serverport+'/'+dbname;
 debug("mongodb: " + dburl);
 
