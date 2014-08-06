@@ -4,13 +4,14 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "DEBUG=uploader:* pm2 start server.js --name uploader -i 5 -- -p 3001 -s ucn -d ucntest",
-    "stop": "DEBUG=uploader:* pm2 stop uploader; pm2 delete uploader;"
+    "start": "pm2 start processes.json",
+    "stop": "pm2 stop processes.json"
   },
   "dependencies": {
     "debug": "latest", 
     "express": "3.x",
     "multiparty": "latest",
+    "body-parser": "latest",
     "minimist": "latest",
     "mongodb": "latest",
     "underscore": "latest"

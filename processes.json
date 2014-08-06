@@ -13,7 +13,7 @@
     "cwd"          : "/home/nodeapp/apps/upload.git",
     "env": {
         "NODE_ENV" : "production",
-        "DEBUG"    : "uploader:*"
+        "DEBUG"    : "uploader"
     }
   },{    
     "name"         : "upload-browser",   
@@ -29,7 +29,7 @@
     "cwd"          : "/home/nodeapp/apps/upload.git",
     "env": {
         "NODE_ENV" : "production",
-        "DEBUG"    : "uploader:*" 
+        "DEBUG"    : "uploader" 
     }
   }]
 }

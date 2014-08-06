@@ -10,10 +10,7 @@ if the keyword is missing.
 RUNNING
 -------
 
-Install pm2:
-
 $ npm install -g pm2
-
 $ npm start
 $ npm stop
 
