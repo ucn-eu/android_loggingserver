@@ -2,7 +2,7 @@
   "apps" : [{
     "name"         : "upload-ucn",
     "script"       : "server.js",
-    "args"         : "['-p', '3001', '-s', 'ucn', '-d', 'ucntest']",
+    "args"         : "['-p', '3001', '-s', 'ucn', 'ucntest']",
     "instances"    : "4",
     "exec_mode"    : "cluster_mode",
     "error_file"   : "/home/nodeapp/logs/upload-ucn-error.log",
@@ -18,7 +18,7 @@
   },{    
     "name"         : "upload-browser",   
     "script"       : "server.js",
-    "args"         : "['-p', '3003', '-s', 'ucn', '-d', 'browsertest']",
+    "args"         : "['-p', '3003', '-s', 'ucn', 'browsertest']",
     "instances"    : "4",
     "exec_mode"    : "cluster_mode",
     "error_file"   : "/home/nodeapp/logs/upload-browser-error.log",   
