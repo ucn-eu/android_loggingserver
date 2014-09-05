@@ -10,20 +10,25 @@ a collection <obj.collection> or 'default' if the keyword is missing.
 INSTALL
 -------
 
+```
 $ npm install -g pm2
 $ npm install
+```
 
 RUNNING
 -------
 
+```
 $ npm start
 $ npm stop
+```
 
 STATUS
 ------
 
+```
 $ pm2 list
 $ pm2 logs upload-ucn
 $ pm2 desc upload-ucn
 $ pm2 monit
-
+```
