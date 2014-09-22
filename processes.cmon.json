@@ -2,7 +2,7 @@
   "apps" : [{
     "name"         : "upload-ucn",
     "script"       : "server.js",
-    "args"         : "['-p', '3001', '-s', 'ucn', 'ucntest']",
+    "args"         : "['-p', '3001', '-s', 'ucn', 'ucnexp']",
     "instances"    : "4",
     "exec_mode"    : "cluster_mode",
     "error_file"   : "/home/nodeapp/logs/upload-ucn-error.log",
@@ -10,7 +10,7 @@
     "pid_file"     : "/home/nodeapp/pids/upload-ucn",
     "run_as_user"  : "nodeapp",
     "run_as_group" : "nodeapp",
-    "cwd"          : "/home/nodeapp/apps/upload.git",
+    "cwd"          : "/home/nodeapp/apps/upload",
     "env": {
         "NODE_ENV" : "production",
         "DEBUG"    : "uploader"
