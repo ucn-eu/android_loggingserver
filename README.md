@@ -15,6 +15,8 @@ $ npm install -g pm2
 $ npm install
 ```
 
+Create processes.json (see the provided examples).
+
 RUNNING
 -------
 
