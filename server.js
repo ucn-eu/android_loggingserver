@@ -69,8 +69,14 @@ app.post('/*', function(req,res) {
     var c = 0;
     var docs = {};
     var adddoc = function(obj) {
+	// convert few known date fields to native mongo format
+	if (obj['ts'])
+	    obj['ts'] = new Date(obj['ts']);
+	if (obj['ts_event'])
+	    obj['ts_event'] = new Date(obj['ts']);
+
 	// add some more metadata to the object
-	obj.upload = { server_ts : Date.now(),
+	obj.upload = { server_ts : new Date(),
 		       req_ip : req.ip,
 		       req_path : req.path };
 	if (!docs[obj.collection]) {
