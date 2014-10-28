@@ -85,8 +85,8 @@ app.post('/*', function(req,res) {
 	    obj2 = _.clone(obj);
 	    obj2.collection = 'sockets';
 	    obj2.data = obj.data.sockets;
-	    if (!docs[ob2j.collection]) {
-		docs[ob2j.collection] = [];
+	    if (!docs[obj2.collection]) {
+		docs[obj2.collection] = [];
 	    }
 	    docs[obj2.collection].push(obj2);
 	    c += 1;
