@@ -79,6 +79,21 @@ app.post('/*', function(req,res) {
 	obj.upload = { server_ts : new Date(),
 		       req_ip : req.ip,
 		       req_path : req.path };
+
+	// HACK: fix for the 4MB object size limit that the network_state.sockets hits (presumably because of the sockets..)
+	if (obj.collection === 'network_state') {
+	    obj2 = _.clone(obj);
+	    obj2.collection = 'sockets';
+	    obj2.data = obj.data.sockets;
+	    if (!docs[ob2j.collection]) {
+		docs[ob2j.collection] = [];
+	    }
+	    docs[obj2.collection].push(obj2);
+	    c += 1;
+
+	    delete obj.data.sockets;
+	}
+
 	if (!docs[obj.collection]) {
 	    docs[obj.collection] = [];
 	}
@@ -104,7 +119,7 @@ app.post('/*', function(req,res) {
 	    
 	if (error) {
 	    debug("failed to save data to mongodb: " + error);
-	    res.type('application/json');	    
+	    res.type('application/json');
 	    res.send(500, {error: "internal server error",
 			   details: error});
 	} else {
