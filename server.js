@@ -85,6 +85,7 @@ app.post('/*', function(req,res) {
 	    obj2 = _.clone(obj);
 	    obj2.collection = 'sockets';
 	    obj2.data = obj.data.sockets;
+	    debug("extract "  + obj2.length + " sockets from network_state");
 	    if (!docs[obj2.collection]) {
 		docs[obj2.collection] = [];
 	    }
