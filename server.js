@@ -80,8 +80,11 @@ app.post('/*', function(req,res) {
 		       req_ip : req.ip,
 		       req_path : req.path };
 
-	// HACK: fix for the 4MB object size limit that the network_state.sockets hits (presumably because of the sockets..)
-	if (obj.collection === 'network_state') {
+	// HACK: fix for the 4MB object size limit that the network_state
+	// objects hit, put the socket list to a separate collection
+	// as this is the largest individual item inside the object.
+	// New version of the android collector do this automatically
+	if (obj.collection === 'network_state' && 'sockets' in obj.data) {
 	    obj2 = _.clone(obj);
 	    obj2.collection = 'sockets';
 	    obj2.data = obj.data.sockets;
