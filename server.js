@@ -73,7 +73,7 @@ app.post('/*', function(req,res) {
 	if (obj['ts'])
 	    obj['ts'] = new Date(obj['ts']);
 	if (obj['ts_event'])
-	    obj['ts_event'] = new Date(obj['ts']);
+	    obj['ts_event'] = new Date(obj['ts_event']);
 
 	// add some more metadata to the object
 	obj.upload = { server_ts : new Date(),
@@ -131,7 +131,8 @@ app.post('/*', function(req,res) {
 	}	
     };
     
-    debug("upload from " + req.ip + " as " + req.get('Content-Type'));
+    debug("upload from " + req.ip + " as " + req.get('Content-Type') + 
+	 " size " + req.get('Content-Length'));
 
     if (req.get('Content-Type').indexOf('multipart/form-data')>=0) {
 	var form = new multiparty.Form({maxFields : 10000});
