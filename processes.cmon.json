@@ -2,7 +2,7 @@
   "apps" : [{
     "name"         : "upload-ucn",
     "script"       : "server.js",
-    "args"         : "['-p', '3001', '-s', 'ucn', 'ucnexp']",
+    "args"         : "['-p', '3001', '-s', 'ucn.inria.fr', 'ucnexp']",
     "instances"    : "4",
     "exec_mode"    : "cluster_mode",
     "error_file"   : "/home/nodeapp/logs/upload-ucn-error.log",
