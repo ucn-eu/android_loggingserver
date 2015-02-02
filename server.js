@@ -4,6 +4,8 @@ var argv = require('minimist')(process.argv.slice(2));
 var express = require('express');
 var multiparty = require('multiparty');
 var bodyParser = require('body-parser')
+var redis = require("redis");
+var moment = require("moment");
 
 // mongo stuff
 var Db = require('mongodb').Db;
@@ -17,6 +19,15 @@ if (argv.h || argv._.length !== 1) {
 	" [-p <port>] [-s server] [-q server_port] db");
   process.exit(0);
 }
+
+// redis cli for runtime stats
+var client = redis.createClient();
+client.select(2, function(res) {
+    debug("Redis select " + res);
+});
+client.on("error", function(err) {
+    debug("Redis error " + err);
+});
 
 var port = argv.p || 3001;
 var server = argv.s || 'localhost';
@@ -37,6 +48,15 @@ db.open(function(err, db) {
     }
 });
 
+// reset stats
+var rstats = 'ucnupload';
+client.hmset(rstats, {
+    start : new Date(),
+    uploadcnt : 0,
+    lastupload : 0,
+    errorcnt : 0,
+    lasterror : 0 });
+
 // main app
 var app = express();
 
@@ -54,21 +74,39 @@ app.use(bodyParser.json())
 app.use(function(err, req, res, next){
     debug(err);
     debug(err.stack);
+
+    try {
+	if (client) {
+	    client.hmset(rstats, { lasterror : new Date() });
+	    client.hincr(rstats, "errorcnt");
+	}
+    } catch(e) {
+    }
+
     res.type('application/json');
-    res.send(500, { error: "internal server error",
-		    details: err});
+    res.status(500).send({ error: "internal server error",
+			   details: err});
 });
 
-// routes
+// GET returns some basic stats about the server
 app.get('/*', function(req, res){
-    res.type('application/json');
-    res.send(500, { error: "invalid request: " + req.originalUrl});
+    client.hgetall(rstats, function(err, obj) {
+	res.type('text/plain');
+	obj.uptime = "Started " + moment(new Date(obj.start).getTime()).fromNow();
+	res.status(200).send(JSON.stringify(obj,null,4));
+    });
 });
 
 app.post('/*', function(req,res) {
     var c = 0;
     var docs = {};
     var adddoc = function(obj) {
+	// required fields
+	if (!obj.collection || !obj.uid || !obj.ts) {
+	    debug("invalid object: " + JSON.stringify(obj));  
+	    return;
+	}
+
 	// convert few known date fields to native mongo format
 	if (obj['ts'])
 	    obj['ts'] = new Date(obj['ts']);
@@ -76,9 +114,10 @@ app.post('/*', function(req,res) {
 	    obj['ts_event'] = new Date(obj['ts_event']);
 
 	// add some more metadata to the object
-	obj.upload = { server_ts : new Date(),
-		       req_ip : req.ip,
-		       req_path : req.path };
+	obj.upload = { 
+	    server_ts : new Date(),
+	    req_ip : req.ip 
+	};
 
 	// HACK: fix for the 4MB object size limit that the network_state
 	// objects hit, put the socket list to a separate collection
@@ -105,7 +144,14 @@ app.post('/*', function(req,res) {
 	c += 1;
     };
     var savedocs = function() {
-	if (c === 0) return;
+	if (c === 0) {
+	    client.hmset(rstats, { lasterror : new Date() });
+	    client.hincr(rstats, "errorcnt");
+
+	    res.type('application/json');
+	    res.status(500).send({error: "got zero objects"});
+	    return;
+	}
 
 	debug("saving " + c + " items");  
 	var error = undefined;
@@ -116,19 +162,34 @@ app.post('/*', function(req,res) {
 	    debug("save " + value.length + " items to " + key);
 
 	    var collection = db.collection(key);
-	    collection.insert(value, {w:1}, function(err, result) {
-		if (err)  error = err;
-	    });
+	    collection.ensureIndex(
+		{uid:1, ts:1}, // unique identifiers for this data
+		{unique: true}, 
+		function(err, result) {
+		    if (err)  
+			error = err;
+		    else
+			collection.insert(value, function(err, result) {
+			    if (err)  error = err;
+			});
+		});
 	}); // each
-	    
+
 	if (error) {
 	    debug("failed to save data to mongodb: " + error);
+
+	    client.hmset(rstats, { lasterror : new Date() });
+	    client.hincr(rstats, "errorcnt");
+
 	    res.type('application/json');
-	    res.send(500, {error: "internal server error",
-			   details: error});
+	    res.status(500).send({error: "internal server error",
+				  details: error});
 	} else {
-	    res.send(200);
-	}	
+	    // stats
+	    client.hmset(rstats, { lastupload : new Date() });
+	    client.hincrby(rstats, "uploadcnt", c);
+	    res.sendStatus(200);
+	}
     };
     
     debug("upload from " + req.ip + " as " + req.get('Content-Type') + 
@@ -151,14 +212,18 @@ app.post('/*', function(req,res) {
 		    debug("invalid data: " + json);
 		}
 	    });
-	});
-	
+	});	
+
 	form.on('error', function(err) {
 	    debug(err);
 	    debug(err.stack);
+
+	    client.hmset(rstats, { lasterror : new Date() });
+	    client.hincr(rstats, "errorcnt");
+
 	    res.type('application/json');	    
-	    res.send(500, { error: "internal server error",
-			    details: err});
+	    res.status(500).send({ error: "internal server error",
+				   details: err});
 	});
 	
 	form.on('close', function(err) {
@@ -181,13 +246,19 @@ app.post('/*', function(req,res) {
 	    savedocs();
 	} else {
 	    debug("invalid req.body: " + JSON.stringify(req.body));
+
+	    client.hmset(rstats, { lasterror : new Date() });
+	    client.hincr(rstats, "errorcnt");
+
 	    res.type('application/json'); 
-	    res.send(500, {error: "invalid data"});
+	    res.status(500).send({error: "invalid data"});
 	}
     } else {
+	client.hmset(rstats, { lasterror : new Date() });
+	client.hincr(rstats, "errorcnt");
+
 	res.type('application/json');
-	res.send(500, 
-		 {error: "unhandled content type: "+req.get('Content-Type')});
+	res.status(500).send({error: "unhandled content type: "+req.get('Content-Type')});
     }
 });
 

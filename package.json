@@ -9,11 +9,13 @@
   },
   "dependencies": {
     "debug": "latest", 
-    "express": "3.x",
+    "express": "4.x",
     "multiparty": "latest",
     "body-parser": "latest",
     "minimist": "latest",
     "mongodb": "latest",
-    "underscore": "latest"
+    "underscore": "latest",
+    "redis" : "latest",
+    "moment" : "latest"
   }
 }
