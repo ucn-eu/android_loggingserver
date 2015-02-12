@@ -6,13 +6,10 @@ var multiparty = require('multiparty');
 var bodyParser = require('body-parser')
 var redis = require("redis");
 var moment = require("moment");
-
-// mongo stuff
 var Db = require('mongodb').Db;
 var Server = require('mongodb').Server;
 
 debug(JSON.stringify(argv));
-
 if (argv.h || argv._.length !== 1) {
   console.log("Usage: " + process.argv[0] + 
 	" " + process.argv[1] + 
@@ -143,6 +140,7 @@ app.post('/*', function(req,res) {
 	docs[obj.collection].push(obj);
 	c += 1;
     };
+
     var savedocs = function() {
 	if (c === 0) {
 	    client.hmset(rstats, { lasterror : new Date() });
@@ -154,27 +152,64 @@ app.post('/*', function(req,res) {
 	}
 
 	debug("saving " + c + " items");  
+
+	// match IPv4 address
+	var regex = new RegEx('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}');
+	var uid = undefined;   // the device uuid
+	var vpnip = undefined; // vpn interface IP
 	var error = undefined;
+
 	_.each(docs, function(value, key) {
-	    if (error) return;	
+	    if (error) return;	// stop, some error happened before
 
 	    // insert batch to the collection
 	    debug("save " + value.length + " items to " + key);
+
+	    if (!uid) {
+		uid = value[0].uid; // device unique identifier
+	    }
+
+	    if (key == 'network_stats' && !vpnip) {
+		// see if the device reports a VPN tunnel interface + IP
+		_.each(value, function(o) {
+		    if (vpnip) return; // found!
+
+		    if (o['data']['ip_addr_show']) {
+			_.each(o['data']['ip_addr_show'], function(iface) {
+			    if (iface.name.indexOf('tun')>=0 && 
+				iface.ipv4 && !vpnip) 
+			    {
+				vpnip = iface.ipv4;
+			    }
+			});
+		    } else if (o['data']['ifconfig']) {
+			_.each(o['data']['ifconfig'], function(iface) {
+			    if (iface.name.indexOf('tun')>=0 && !vpnip) {
+				vpnip = _.find(iface.addresses, function(ad) {
+				    return regex.test(ad);
+				});
+			    }
+			});
+		    }
+		});
+	    }
 
 	    var collection = db.collection(key);
 	    collection.ensureIndex(
 		{uid:1, ts:1}, // unique identifiers for this data
 		{unique: true}, 
 		function(err, result) {
-		    if (err)  
+		    if (err) {
 			error = err;
-		    else
+		    } else {
 			collection.insert(value, function(err, result) {
-			    if (err)  error = err;
+			    if (err) 
+				error = err;
 			});
+		    }
 		});
-	}); // each
-
+	}); // each docs
+	
 	if (error) {
 	    debug("failed to save data to mongodb: " + error);
 
@@ -185,12 +220,61 @@ app.post('/*', function(req,res) {
 	    res.status(500).send({error: "internal server error",
 				  details: error});
 	} else {
-	    // stats
 	    client.hmset(rstats, { lastupload : new Date() });
 	    client.hincrby(rstats, "uploadcnt", c);
 	    res.sendStatus(200);
+
+	    // handle app client logging after more urgent stuff is done 
+	    var updatelogs = function(devicename) {
+		var collection = db.collection('devices');
+		collection.update({login : devicename },
+				  {$set : { 
+				      loggerapp_uuid : uid,
+				      loggerapp_lastseen : new Date(),
+				  },
+				   $inc : { 
+				       loggerapp_uploads : 1 
+				   }
+				  },function(err, result) {
+				      if (err)
+					  debug("dev update error: " + err);
+				  });  
+	    };
+
+	    client.get("android:"+uid, function(err, obj) {
+		var devicename = undefined;
+		if (!err && obj) 
+		    devicename = obj;
+		
+		if (devicename) {
+		    // already seen this device, just update logs
+		    updatelogs(devicename);
+		    
+		} else if (!devicename && vpnip) {
+		    // new device, identify based on the VPN IP
+		    debug("find match " + vpnip + "/" + uid);
+		    var collection = db.collection('devices');
+		    collection.findOne(
+			{$or : [{vpn_tcp_ip:vpnip}, 
+				{vpn_udp_ip:vpnip}]}, 
+			function(err, match) {
+			    if (!err && match) {				
+				devicename = match.login;
+				// store mapping in redis for next time
+				client.set("android:"+uid, devicename);
+				debug("matched " + vpnip + "->" + devicename)
+				updatelogs(devicename);
+			    } else {
+				debug("no match for " + vpnip);
+			    }
+			}
+		    ); // findOne
+		} else {
+		    debug("no VPN IP found for " + uid);
+		}
+	    }); // client.get
 	}
-    };
+    }; //savedocs
     
     debug("upload from " + req.ip + " as " + req.get('Content-Type') + 
 	 " size " + req.get('Content-Length'));
