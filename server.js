@@ -63,10 +63,10 @@ app.enable('trust proxy');
 // middleware
 
 // parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.urlencoded({limit: '100mb', extended: false }))
 
 // parse application/json
-app.use(bodyParser.json())
+app.use(bodyParser.json({limit: '100mb'}))
 
 app.use(function(err, req, res, next){
     debug(err);
