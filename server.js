@@ -75,7 +75,7 @@ app.use(function(err, req, res, next){
     try {
 	if (client) {
 	    client.hmset(rstats, { lasterror : new Date() });
-	    client.hincr(rstats, "errorcnt");
+	    client.hincrby(rstats, "errorcnt", 1);
 	}
     } catch(e) {
     }
@@ -144,7 +144,7 @@ app.post('/*', function(req,res) {
     var savedocs = function() {
 	if (c === 0) {
 	    client.hmset(rstats, { lasterror : new Date() });
-	    client.hincr(rstats, "errorcnt");
+	    client.hincrby(rstats, "errorcnt", 1);
 
 	    res.type('application/json');
 	    res.status(500).send({error: "got zero objects"});
@@ -214,7 +214,7 @@ app.post('/*', function(req,res) {
 	    debug("failed to save data to mongodb: " + error);
 
 	    client.hmset(rstats, { lasterror : new Date() });
-	    client.hincr(rstats, "errorcnt");
+	    client.hincrby(rstats, "errorcnt", 1);
 
 	    res.type('application/json');
 	    res.status(500).send({error: "internal server error",
@@ -303,7 +303,7 @@ app.post('/*', function(req,res) {
 	    debug(err.stack);
 
 	    client.hmset(rstats, { lasterror : new Date() });
-	    client.hincr(rstats, "errorcnt");
+	    client.hincrby(rstats, "errorcnt", 1);
 
 	    res.type('application/json');	    
 	    res.status(500).send({ error: "internal server error",
@@ -332,14 +332,14 @@ app.post('/*', function(req,res) {
 	    debug("invalid req.body: " + JSON.stringify(req.body));
 
 	    client.hmset(rstats, { lasterror : new Date() });
-	    client.hincr(rstats, "errorcnt");
+	    client.hincrby(rstats, "errorcnt", 1);
 
 	    res.type('application/json'); 
 	    res.status(500).send({error: "invalid data"});
 	}
     } else {
 	client.hmset(rstats, { lasterror : new Date() });
-	client.hincr(rstats, "errorcnt");
+	client.hincrby(rstats, "errorcnt", 1);
 
 	res.type('application/json');
 	res.status(500).send({error: "unhandled content type: "+req.get('Content-Type')});
