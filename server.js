@@ -168,7 +168,7 @@ app.post('/*', function(req,res) {
 			    if (iface.name.indexOf('tun')>=0 && 
 				iface.ipv4 && !vpnip) 
 			    {
-				vpnip = iface.ipv4;
+				vpnip = iface.ipv4.ip;
 			    }
 			});
 		    } else if (o['data']['ifconfig']) {

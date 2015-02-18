@@ -58,9 +58,9 @@ DbHandler.prototype.findDevice = function(cb, vpnip) {
 		cb(match);
 	    } else if (err) {
 		debug("findDevice error: " + err);
-		cb(undefied);
+		cb(undefined);
 	    } else {
-		cb(undefied);
+		cb(undefined);
 	    }
 	}
     );
