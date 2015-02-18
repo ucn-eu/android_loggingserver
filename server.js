@@ -6,8 +6,7 @@ var multiparty = require('multiparty');
 var bodyParser = require('body-parser')
 var redis = require("redis");
 var moment = require("moment");
-var Db = require('mongodb').Db;
-var Server = require('mongodb').Server;
+var DbHandler = require("./db").DbHandler;
 
 debug(JSON.stringify(argv));
 if (argv.h || argv._.length !== 1) {
@@ -26,24 +25,14 @@ client.on("error", function(err) {
     debug("Redis error " + err);
 });
 
+// app listening port
 var port = argv.p || 3001;
+
+// storage backend
 var server = argv.s || 'localhost';
 var serverport = argv.q || 27017;
 var dbname = argv._[0];
-
-var dburl = 'mongodb://'+server+':'+serverport+'/'+dbname;
-debug("mongodb: " + dburl);
-
-// connect to the db
-var db = new Db(dbname, 
-		new Server(server, serverport, {auto_reconnect: true}), 
-		{safe: true});
-db.open(function(err, db) {
-    if (err) {
-	console.error(err);
-	process.exit(-1);
-    }
-});
+var db = new DbHandler(server, serverport, dbname);
 
 // reset stats
 var rstats = 'ucnupload';
@@ -159,19 +148,19 @@ app.post('/*', function(req,res) {
 	var vpnip = undefined; // vpn interface IP
 	var error = undefined;
 
-	_.each(docs, function(value, key) {
-	    if (error) return;	// stop, some error happened before
+	_.each(docs, function(items, key) {
+	    if (error) return false; // stop, some error happened before
 
 	    // insert batch to the collection
-	    debug("save " + value.length + " items to " + key);
+	    debug("save " + items.length + " items to " + key);
 
 	    if (!uid) {
-		uid = value[0].uid; // device unique identifier
+		uid = items[0].uid; // device unique identifier
 	    }
 
 	    if (key == 'network_stats' && !vpnip) {
 		// see if the device reports a VPN tunnel interface + IP
-		_.each(value, function(o) {
+		_.each(items, function(o) {
 		    if (vpnip) return; // found!
 
 		    if (o['data']['ip_addr_show']) {
@@ -194,25 +183,12 @@ app.post('/*', function(req,res) {
 		});
 	    }
 
-	    var collection = db.collection(key);
-	    collection.ensureIndex(
-		{uid:1, ts:1}, // unique identifiers for this data
-		{unique: true}, 
-		function(err, result) {
-		    if (err) {
-			error = err;
-		    } else {
-			collection.insert(value, function(err, result) {
-			    if (err) 
-				error = err;
-			});
-		    }
-		});
+	    db.insertTo(function(err, result) {
+		if (err) error = err;
+	    }, key, items);
 	}); // each docs
 	
 	if (error) {
-	    debug("failed to save data to mongodb: " + error);
-
 	    client.hmset(rstats, { lasterror : new Date() });
 	    client.hincrby(rstats, "errorcnt", 1);
 
@@ -224,23 +200,6 @@ app.post('/*', function(req,res) {
 	    client.hincrby(rstats, "uploadcnt", c);
 	    res.sendStatus(200);
 
-	    // handle app client logging after more urgent stuff is done 
-	    var updatelogs = function(devicename) {
-		var collection = db.collection('devices');
-		collection.update({login : devicename },
-				  {$set : { 
-				      loggerapp_uuid : uid,
-				      loggerapp_lastseen : new Date(),
-				  },
-				   $inc : { 
-				       loggerapp_uploads : 1 
-				   }
-				  },function(err, result) {
-				      if (err)
-					  debug("dev update error: " + err);
-				  });  
-	    };
-
 	    client.get("android:"+uid, function(err, obj) {
 		var devicename = undefined;
 		if (!err && obj) 
@@ -248,27 +207,22 @@ app.post('/*', function(req,res) {
 		
 		if (devicename) {
 		    // already seen this device, just update logs
-		    updatelogs(devicename);
+		    db.logApp(devicename, uid);
 		    
 		} else if (!devicename && vpnip) {
 		    // new device, identify based on the VPN IP
 		    debug("find match " + vpnip + "/" + uid);
-		    var collection = db.collection('devices');
-		    collection.findOne(
-			{$or : [{vpn_tcp_ip:vpnip}, 
-				{vpn_udp_ip:vpnip}]}, 
-			function(err, match) {
-			    if (!err && match) {				
-				devicename = match.login;
-				// store mapping in redis for next time
-				client.set("android:"+uid, devicename);
-				debug("matched " + vpnip + "->" + devicename)
-				updatelogs(devicename);
-			    } else {
-				debug("no match for " + vpnip);
-			    }
+		    db.findDevice(function(dev) {
+			if (dev) {				
+			    devicename = dev.login;
+			    // store mapping in redis for next time
+			    client.set("android:"+uid, devicename);
+			    debug("matched " + vpnip + "->" + devicename)
+			    db.logApp(devicename, uid);
+			} else {
+			    debug("no match for " + vpnip);
 			}
-		    ); // findOne
+		    }, vpnip);
 		} else {
 		    debug("no VPN IP found for " + uid);
 		}
