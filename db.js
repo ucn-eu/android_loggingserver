@@ -49,7 +49,7 @@ DbHandler.prototype.insertTo = function(cb, key, items) {
 };
 
 DbHandler.prototype.findDevice = function(cb, vpnip) {
-    var collection = db.collection('devices');
+    var collection = this.db.collection('devices');
     collection.findOne(
 	{ $or : [ {vpn_tcp_ip:vpnip}, 
 		  {vpn_udp_ip:vpnip} ]}, 
@@ -68,7 +68,7 @@ DbHandler.prototype.findDevice = function(cb, vpnip) {
 
 /** Update device to activity logger mapping and stats. */
 DbHandler.prototype.logApp = function(login, uid) {
-    var collection = db.collection('devices');
+    var collection = this.db.collection('devices');
     collection.update(
 	{ login : login },
 	{ $set : { loggerapp_uuid : uid,
