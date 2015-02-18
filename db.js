@@ -35,6 +35,7 @@ DbHandler.prototype.insertTo = function(cb, key, items) {
 		collection.insert(value, function(err, result) {
 		    debug(JSON.stringify(err));
 		    debug(typeof err);
+		    // FIXME: how to get the msg / type from the err object? 
 		    if (("" + err).indexOf('duplicate key error')>=0) {
 			// ignore: something was uploaded twice
 			cb(undefined, result);

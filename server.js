@@ -143,7 +143,7 @@ app.post('/*', function(req,res) {
 	debug("saving " + c + " items");  
 
 	// match IPv4 address
-	var regex = new RegEx('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}');
+	var regex = /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/;
 	var uid = undefined;   // the device uuid
 	var vpnip = undefined; // vpn interface IP
 	var error = undefined;
