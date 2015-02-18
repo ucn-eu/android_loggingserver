@@ -158,7 +158,7 @@ app.post('/*', function(req,res) {
 		uid = items[0].uid; // device unique identifier
 	    }
 
-	    if (key == 'network_stats' && !vpnip) {
+	    if (key == 'network_state' && !vpnip) {
 		// see if the device reports a VPN tunnel interface + IP
 		_.each(items, function(o) {
 		    if (vpnip) return; // found!
