@@ -32,7 +32,7 @@ DbHandler.prototype.insertTo = function(cb, key, items) {
 	    if (err) {
 		cb(err, undefined);
 	    } else {
-		collection.insert(value, function(err, result) {
+		collection.insert(items, function(err, result) {
 		    debug(JSON.stringify(err));
 		    debug(typeof err);
 		    // FIXME: how to get the msg / type from the err object? 
