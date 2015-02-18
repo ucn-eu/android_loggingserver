@@ -38,8 +38,8 @@ DbHandler.prototype.insertTo = function(cb, key, items) {
 		    if (("" + err).indexOf('duplicate key error')>=0) {
 			// ignore: something was uploaded twice
 			cb(undefined, result);
-		    } else if (err) {
-			cb(error, result);
+		    } else {
+			cb(err, result);
 		    }
 		});
 	    }
