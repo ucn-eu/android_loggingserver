@@ -2,10 +2,9 @@
   "apps" : [{
     "name"         : "upload-ucn",
     "script"       : "server.js",
-    "args"         : "['-p', '3001', '-s', 'ucn.inria.fr', 'ucnexp']",
     "instances"    : "4",
     "exec_mode"    : "cluster_mode",
-    "error_file"   : "/home/nodeapp/logs/upload-ucn-error.log",
+    "error_file"   : "/home/nodeapp/logs/upload-ucn.log",
     "out_file"     : "/home/nodeapp/logs/upload-ucn.log",
     "pid_file"     : "/home/nodeapp/pids/upload-ucn",
     "run_as_user"  : "nodeapp",
@@ -13,6 +12,8 @@
     "cwd"          : "/home/nodeapp/apps/upload",
     "env": {
         "NODE_ENV" : "production",
+	"MONGOHOST": "ucn.inria.fr",
+	"MONGODB"  : "ucnexp",
         "DEBUG"    : "uploader"
     }
   }]

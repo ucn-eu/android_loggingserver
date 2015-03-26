@@ -1,6 +1,5 @@
 var debug = require('debug')('uploader')
 var _ = require('underscore');
-var argv = require('minimist')(process.argv.slice(2));
 var express = require('express');
 var multiparty = require('multiparty');
 var bodyParser = require('body-parser')
@@ -8,30 +7,26 @@ var redis = require("redis");
 var moment = require("moment");
 var DbHandler = require("./db").DbHandler;
 
-debug(JSON.stringify(argv));
-if (argv.h || argv._.length !== 1) {
-  console.log("Usage: " + process.argv[0] + 
-	" " + process.argv[1] + 
-	" [-p <port>] [-s server] [-q server_port] db");
-  process.exit(0);
-}
+// configs
+var redisdb = parseInt(process.env.REDISDB) || 2;
+var server = process.env.MONGOHOST || 'localhost';
+var serverport = parseInt(process.env.MONGOPORT) || 27017;
+var dbname = process.env.MONGODB || 'test';
 
 // redis cli for runtime stats
 var client = redis.createClient();
-client.select(2, function(res) {
+client.select(redisdb, function(res) {
     debug("Redis select " + res);
 });
+
 client.on("error", function(err) {
     debug("Redis error " + err);
 });
 
 // app listening port
-var port = argv.p || 3001;
+var port = parseInt(process.env.PORT) || 3000;
 
 // storage backend
-var server = argv.s || 'localhost';
-var serverport = argv.q || 27017;
-var dbname = argv._[0];
 var db = new DbHandler(server, serverport, dbname);
 
 // reset stats
