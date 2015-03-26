@@ -12,6 +12,7 @@ var redisdb = parseInt(process.env.REDISDB) || 2;
 var server = process.env.MONGOHOST || 'localhost';
 var serverport = parseInt(process.env.MONGOPORT) || 27017;
 var dbname = process.env.MONGODB || 'test';
+var port = parseInt(process.env.PORT) || 3000;
 
 // redis cli for runtime stats
 var client = redis.createClient();
@@ -22,9 +23,6 @@ client.select(redisdb, function(res) {
 client.on("error", function(err) {
     debug("Redis error " + err);
 });
-
-// app listening port
-var port = parseInt(process.env.PORT) || 3000;
 
 // storage backend
 var db = new DbHandler(server, serverport, dbname);
