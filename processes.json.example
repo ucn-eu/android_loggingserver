@@ -1,8 +1,8 @@
 {
   "apps" : [{
-    "name"         : "upload-ucn",
+    "name"         : "ucnupload",
     "script"       : "server.js",
-    "instances"    : "4",
+    "instances"    : "2",
     "exec_mode"    : "cluster_mode",
     "error_file"   : "/home/nodeapp/logs/upload-ucn.log",
     "out_file"     : "/home/nodeapp/logs/upload-ucn.log",
@@ -14,7 +14,7 @@
         "NODE_ENV" : "production",
 	"MONGOHOST": "ucn.inria.fr",
 	"MONGODB"  : "ucnexp",
-        "DEBUG"    : "uploader"
+        "DEBUG"    : "ucnupload"
     }
   }]
 }
